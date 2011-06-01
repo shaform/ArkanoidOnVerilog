@@ -1,12 +1,12 @@
 module draw_ball
 #(parameter CNT = 3)
 (
-	output [3:0] out,
 	input [10:0] vcounter,
 	input [11:0] hcounter,
 	input [CNT*10-1:0] xs, ys,
 	input [CNT-1:0] balls,
 	input [5:0] size
+	output [3:0] out,
 );
 reg v, r, g, b;
 assign out = {v, r, g, b};
