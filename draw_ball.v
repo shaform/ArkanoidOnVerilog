@@ -4,9 +4,9 @@ module draw_ball
 	input [10:0] vcounter,
 	input [11:0] hcounter,
 	input [CNT*10-1:0] xs, ys,
-	input [CNT-1:0] balls,
+	input [CNT-1:0] active,
 	input [5:0] radius,
-	output [3:0] out,
+	output [3:0] out
 );
 reg v, r, g, b;
 assign out = {v, r, g, b};
@@ -18,7 +18,7 @@ begin : circle
 	sq = radius*radius;
 
 	for (i=0; i<CNT; i=i+1) begin : forblock
-	if (balls[i] && ~v) begin
+	if (balls[i] && ~v) begin : ballblock
 		integer dx, dy;
 		dx = hcounter;
 		dy = hcounter;
@@ -30,6 +30,7 @@ begin : circle
 			g = 1'b1;
 			b = 1'b1;
 		end
+	end
 	end
 end
 endmodule

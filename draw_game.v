@@ -2,12 +2,8 @@ module draw_game(
 	input clock, reset,
 	input visible,
 	input [3:0] in_ball, in_block, in_paddle, in_back,
-	output o_r, o_g, o_b
+	output [2:0] oRGB
 );
-reg [2:0] oRGB;
-
-assign {o_r, o_g, o_b} = oRGB;
-
 always @(posedge clock) begin
 	if (reset || ~visible) begin
 		oRGB <= 3'b000;
@@ -24,5 +20,4 @@ always @(posedge clock) begin
 			oRGB <= 3'b000;
 	end
 end
-
 endmodule
