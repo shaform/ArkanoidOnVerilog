@@ -1,54 +1,62 @@
-module state_control(
-	input [9:0] x, y,
-	input [5:0] radius, ang_x, ang_y,
-	output [9:0] o_x, o_y,
-	output [5:0] o_ang_x, o_ang_y,
-	output drop
+module state_control
+#(
+	parameter BALL_NUM = 3,
+	parameter SHOT_NUM = 2
+)
+(
+	input clock, reset,
+	output [5:0] radius
+	output reg [BALL_NUM*10-1:0] o_bx, o_by,
+	output [BALL_NUM-1:0] b_active,
+	output reg [SHOT_NUM*10-1:0] o_sx, o_sy,
+	output [SHOT_NUM-1:0] s_active,
 );
-
+localparam TH_NUM = BALL_NUM + SHOT_NUM;
 localparam MAXX = 639;
 localparam MAXY = 479;
-localparam ST_INIT;
-localparam ST_WAIT;
-localparam ST_PLAY;
-localparam ST_DEAD;
+localparam PD_SZ = 5;
+localparam PD_LEN = 20;
+localparam UNIT = 10000;
+localparam CNT_MAX = 20;
+
+localparam ST_INIT =0;
+localparam ST_WAIT =1;
+localparam ST_PLAY =2;
+localparam ST_DEAD =3;
+
+wire [4:0] state;
+assign state = ST_PLAY;
+assign radius = 20;
+assign balls = 3'b111;
+
 
 // Threads control
-reg [THREAD_NUM-1:0] thread_turn;
-always @(posedge clock)
-begin
-	if (reset) begin
-		thread_turn <= 1;
-	end else if (enable) begin
-		thread_turn <= {thread_turn[THREAD_NUM-2:0], thread_turn[THREAD_NUM-1]};
-	end
-end
-
+reg [THREAD_NUM-1:0] th_turn;
+shift_counter #(THREAD_NUM) s_cnt(clock, reset, 1'b1, th_turn);
 
 // Ball control
-wire [BALL_NUM-1:0] ball_turn;
-assign ball_turn = thread_turn[BALL_NUM-1:0];
+wire [BALL_NUM-1:0] b_turn;
+assign b_turn = th_turn[BALL_NUM-1:0];
+
+reg [9:0] b_x[2:0], b_y[2:0];
+reg [9:0] b_ang_x[2:0], b_ang_y[2:0];
+reg b_di_x[2:0], b_di_y[2:0];
+
+assign
+
 
 // Speed control counters.
-reg [10:0] b_cnt[BALL_NUM-1:0];
-always @(posedge clock)
-begin : ball_count
-	integer i;
-	for (i=0; i<BALL_NUM; i=i+1) begin
-		if (reset)
-			b_cnt[i] <= 0;
-		else if (enable && ball_turn[i])
-			if (b_cnt[i] < UNIT) begin
-				b_cnt[i] <= b_cnt[i] + 1;
-			end else begin
-				b_cnt[i] <= 0;
-			end
+wire [CNT_MAX:0] b_cnt[BALL_NUM-1:0];
+generate
+	genvar i;
+	for (i=0; i<BALL_NUM; i=i+1) begin : cnt_block
+		counter #(.BIT(CNT_MAX), .BOUND(UNIT)) cnt(clock, reset, b_turn[i], b_cnt[i]);
 	end
-end
+endgenerate
 
 // Ball Moving
 always @(posedge clock)
-begin : ball_move
+begin : bmove_block
 	integer i;
 	for (i=0; i<BALL_NUM; i=i+1) begin
 		if (reset) begin
@@ -57,14 +65,14 @@ begin : ball_move
 		end else if (enable && ball_turn[i])
 			case (state)
 				ST_PLAY: begin
-					if (b_cnt[i] >= UNIT/b_ang_x[i]) begin
+					if (b_cnt[i]*b_ang_x[i] >= UNIT) begin
 						if (b_di_x[i])
 							b_x[i] <= b_x[i]-1;
 						else
 							b_x[i] <= b_x[i]+1;
 					end
 
-					if (b_cnt[i] >= UNIT/b_ang_y[i]) begin
+					if (b_cnt[i]*b_ang_y[i] >= UNIT) begin
 						if (b_di_y[i])
 							b_y[i] <= b_y[i]-1;
 						else
@@ -73,16 +81,43 @@ begin : ball_move
 				end
 				ST_WAIT: begin
 					b_x[i] <= pd_x;
-					b_y[i] <= MAXY-b_radius-PD_SZ;
+					b_y[i] <= MAXY-radius-PD_SZ;
 				end
 			endcase
 	end
 end
 
+always @(posedge clock)
+begin
+	if (reset) begin
+		b_ang_x[0] = 5;
+		b_ang_y[0] = 5;
+		b_ang_x[1] = 10;
+		b_ang_y[1] = 2;
+		b_ang_x[2] = 4;
+		b_ang_y[2] = 7;
+	end else if (enable) begin : bounce_block
+		integer i;
+		for (i=0; i<2; i=i+1) begin
+			if (ball_turn[i]) begin
+				if (radius >= b_x[i]) begin
+					if (b_ang_x[i][5]) b_ang_x[i][5] = 1'b0;
+				end else if (b_x[i] + radius >= MAXX) begin
+					if (~b_ang_x[i][5]) b_ang_x[i][5] = 1'b1;
+				end
+				if (radius > b_y[i]) begin
+					if (b_ang_y[i][5]) b_ang_y[i][5] = 1'b0;
+				end else if (b_y[i] + radius >= MAXY) begin
+					if (~b_ang_y[i][5]) b_ang_y[i][5] = 1'b1;
+				end
+			end
+		end
+	end
+end
 
 
 // ball bouncing control
-
+/*
 always @(*) begin
 	crash = 1'b0;
 
@@ -136,5 +171,5 @@ end else if (y > radius + MAXY) beign
 	// death !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	// death !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 end
-
+*/
 endmodule
