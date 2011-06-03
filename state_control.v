@@ -13,10 +13,21 @@ localparam ST_WAIT;
 localparam ST_PLAY;
 localparam ST_DEAD;
 
+// Threads control
+reg [THREAD_NUM-1:0] thread_turn;
+always @(posedge clock)
+begin
+	if (reset) begin
+		thread_turn <= 1;
+	end else if (enable) begin
+		thread_turn <= {thread_turn[THREAD_NUM-2:0], thread_turn[THREAD_NUM-1]};
+	end
+end
 
 
-
-reg [BALL_NUM-1:0] ball_turn;
+// Ball control
+wire [BALL_NUM-1:0] ball_turn;
+assign ball_turn = thread_turn[BALL_NUM-1:0];
 
 // Speed control counters.
 reg [10:0] b_cnt[BALL_NUM-1:0];
