@@ -4,8 +4,8 @@ module shift_counter
 )
 (
 	input clock, reset, enable,
-	output reg cnt[BIT-1:0]
-)
+	output reg [BIT-1:0] cnt
+);
 
 always @(posedge clock)
 begin
@@ -13,6 +13,5 @@ begin
 		cnt <= 1;
 	else if (enable)
 		cnt <= {cnt[BIT-2:0], cnt[BIT-1]};
-	end
 end
 endmodule

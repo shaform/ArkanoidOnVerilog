@@ -2,7 +2,7 @@ module draw_game(
 	input clock, reset,
 	input visible,
 	input [3:0] in_ball, in_block, in_paddle, in_back,
-	output [2:0] oRGB
+	output reg [2:0] oRGB
 );
 always @(posedge clock) begin
 	if (reset || ~visible) begin

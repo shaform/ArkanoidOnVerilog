@@ -18,7 +18,7 @@ begin : circle
 	sq = radius*radius;
 
 	for (i=0; i<CNT; i=i+1) begin : forblock
-	if (balls[i] && ~v) begin : ballblock
+	if (active[i]) begin : ballblock
 		integer dx, dy;
 		dx = hcounter;
 		dy = hcounter;

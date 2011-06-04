@@ -1,12 +1,12 @@
 module counter
 #(
-	parameter BIT = 3
-	parameter BOUND = (1<<BIT)-1,
+	parameter BIT = 3,
+	parameter BOUND = (1<<BIT)-1
 )
 (
-	input clock, reset, enable
-	output reg cnt[BIT-1:0]
-)
+	input clock, reset, enable,
+	output reg [BIT-1:0] cnt
+);
 
 always @(posedge clock)
 begin
@@ -18,6 +18,5 @@ begin
 		end else begin
 			cnt <= 0;
 		end
-	end
 end
 endmodule
