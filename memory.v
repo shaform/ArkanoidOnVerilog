@@ -1,11 +1,11 @@
 module memory(
 	input clock, write,
 	input [4:0] addr1, addr2,
-	input [71:0] in,
-	output [71:0] out1, out2
+	input [29:0] in,
+	output [29:0] out1, out2
 );
 
-reg [72-1:0] ram [31:0];
+reg [29:0] ram [29:0];
 
 always @(posedge clock) begin 
 	if (write) 
