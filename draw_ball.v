@@ -1,36 +1,31 @@
-module draw_ball
-#(parameter CNT = 3)
-(
+module draw_ball(
 	input [10:0] vcounter,
 	input [11:0] hcounter,
-	input [CNT*10-1:0] xs, ys,
-	input [CNT-1:0] active,
+	input [9:0] x1, y1, x2, y2,
+	input [1:0] active,
 	input [5:0] radius,
-	output [3:0] out
+	output reg [3:0] out
 );
-reg v, r, g, b;
-assign out = {v, r, g, b};
+wire [19:0] xs, ys;
+assign xs = {x2, x1};
+assign ys = {y2, y1};
 
 always @(*)
 begin : circle
-	integer sq, i;
-	v = 1'b0;
+	integer i, sq;
+	out = 4'b0000;
 	sq = radius*radius;
-
-	for (i=0; i<CNT; i=i+1) begin : forblock
-	if (active[i]) begin : ballblock
-		integer dx, dy;
-		dx = hcounter;
-		dy = hcounter;
-		dx = dx - xs[i*10+:10];
-		dy = dy - ys[i*10+:10];
-		if (dx*dx + dy*dy <= sq) begin
-			v = 1'b1;
-			r = 1'b1;
-			g = 1'b1;
-			b = 1'b1;
+	for (i=0; i<2; i=i+1) begin : forblock
+		if (active[i]) begin : ballblock
+			integer dx, dy;
+			dx = hcounter;
+			dy = vcounter;
+			dx = dx - xs[i*10+:10];
+			dy = dy - ys[i*10+:10];
+			if (dx*dx + dy*dy <= sq) begin
+				out = 4'b1111;
+			end
 		end
-	end
 	end
 end
 endmodule
