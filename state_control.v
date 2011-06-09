@@ -14,9 +14,10 @@ module state_control
 	output reg [SHOT_NUM*2-1:0] o_sx, o_sy,
 	output [SHOT_NUM-1:0] s_active,
 	output reg bm_enable,
-	output reg [4:0] bm_row, bm_col,
+	output [4:0] bm_row, bm_col,
 	output reg [1:0] bm_func, bm_stage
 );
+
 localparam MAXX = 320;
 localparam MAXY = 480;
 localparam LEFT = 160;
@@ -39,14 +40,20 @@ localparam ST_DEAD = 2'b11;
 assign b_radius = 8;
 assign p_radius = 16;
 
+wire [5:0] bl_radius;
 reg [1:0] state, next_state;
 reg [9:0] b_x[BALL_NUM-1:0], b_y[BALL_NUM-1:0];
+wire [9:0] bl_x, bl_y;
 reg [9:0] b_ang_x[BALL_NUM-1:0], b_ang_y[BALL_NUM-1:0];
 reg b_di_x[BALL_NUM-1:0], b_di_y[BALL_NUM-1:0];
 wire [40:0] b_cntx[BALL_NUM-1:0], b_cnty[BALL_NUM-1:0];
 wire [BALL_NUM-1:0] b_rstx, b_rsty;
-wire [BALL_NUM-1:0] b_bounced;
-wire [1:0] b_bdi[BALL_NUM-1:0];
+wire [BALL_NUM-1:0] b_bounced_p, b_bounced_bl, b_bounced;
+wire [1:0] b_bdi_p[BALL_NUM-1:0], b_bdi_bl[BALL_NUM-1:0], b_bdi[BALL_NUM-1:0];
+
+wire bl_enable, bl_rstc, bl_rstr;
+assign bl_x = LEFT + 16 + bm_col*32;
+assign bl_y = TOP + 8 + bm_row*16;
 
 always @(*)
 begin
@@ -57,6 +64,15 @@ begin
 		bm_enable = 1'b1;
 		bm_func = 2'b01;
 		bm_stage = 2'b11;
+	end else if (state == ST_PLAY && b_bounced_bl) begin
+		bm_enable = 1'b1;
+		bm_func = 2'b00;
+	end else if (btn_r) begin
+		bm_enable = 1'b1;
+		bm_func = 2'b11;
+	end else if (btn_l) begin
+		bm_enable = 1'b1;
+		bm_func = 2'b10;
 	end
 end
 
@@ -65,12 +81,15 @@ genvar i;
 for (i=0; i<BALL_NUM; i=i+1) begin : b_genblock
 	counter #(40) cntx(clock, b_rstx[i], 1'b1, b_cntx[i]);
 	counter #(40) cnty(clock, b_rsty[i], 1'b1, b_cnty[i]);
-	bounce_detect p_bounce(b_x[i], b_y[i], b_radius, p_x, p_y, p_radius, PD_H, b_bounced[i], b_bdi[i]);
+	bounce_detect p_bounce(1'b1, b_x[i], b_y[i], b_radius, p_x, p_y, p_radius, PD_H, b_bounced_p[i], b_bdi_p[i]);
+	bounce_detect bl_bounce(bm_block != 0 && bm_ready, b_x[i], b_y[i], b_radius, bl_x, bl_y, bl_radius, 8, b_bounced_bl[i], b_bdi_bl[i]);
 
 	assign o_bx[i*10+9:i*10] = b_x[i];
 	assign o_by[i*10+9:i*10] = b_y[i];
 	assign b_rstx[i] = reset || (b_cntx[i]*b_ang_x[i] >= UNIT);
 	assign b_rsty[i] = reset || (b_cnty[i]*b_ang_y[i] >= UNIT);
+	assign b_bounced[i] = b_bounced_p[i] | b_bounced_bl[i];
+	assign b_bdi[i] = b_bounced_bl[i] ? b_bdi_bl[i] : b_bdi_p[i];
 end
 endgenerate
 
@@ -103,6 +122,17 @@ begin
 			next_state = 2'bxx;
 	endcase
 end
+
+// block counter
+assign bl_enable = bm_col >= 4'd9;
+assign bl_rstc = reset || bl_enable;
+assign bl_rstr = reset || bm_row >= 5'd30;
+counter #(5) cntblc(clock, bl_rstc, 1'b1, bm_col);
+counter #(5) cntblr(clock, bl_rstr, bl_enable, bm_row);
+
+assign bl_radius = bm_block[2] ? 16 : 8;
+
+
 
 
 // Ball control
@@ -161,17 +191,17 @@ begin
 		for (i=0; i<2; i=i+1) begin
 			if (LEFT + b_radius >= b_x[i] || (b_bounced[i] && b_bdi[i] == B_RIGHT)) begin
 				// bounce left side
-				if (b_di_x[i]) b_di_x[i] = 1'b0;
+				b_di_x[i] = 1'b0;
 			end else if (b_x[i] + b_radius >= LEFT+MAXX || (b_bounced[i] && b_bdi[i] == B_LEFT)) begin
 				// bounce right side
-				if (~b_di_x[i]) b_di_x[i] = 1'b1;
+				b_di_x[i] = 1'b1;
 			end
 			if (TOP + b_radius > b_y[i] || (b_bounced[i] && b_bdi[i] == B_DOWN)) begin
 				// bounce top side
-				if (b_di_y[i]) b_di_y[i] = 1'b0;
+				b_di_y[i] = 1'b0;
 			end else if (b_y[i] + b_radius >= TOP+MAXY  || (b_bounced[i] && b_bdi[i] == B_UP)) begin
 				// bounce down side
-				if (~b_di_y[i]) b_di_y[i] = 1'b1;
+				b_di_y[i] = 1'b1;
 			end
 		end
 	end

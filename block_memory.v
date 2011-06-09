@@ -21,7 +21,7 @@ wire [4:0] addr2;
 reg [1:0] state, next_state;
 reg [1:0] rom_stage;
 wire [29:0] rom_out, out1, out2;
-reg [29:0] mem_out, w_data;
+reg [29:0] mem_out, last_out, w_data;
 wire rom_enable, end_func, m_write;
 
 assign ready = state == READY;
@@ -56,9 +56,15 @@ stage_rom rom(clock, rom_enable, cnt, rom_stage, rom_out);
 always @(posedge clock)
 begin
 	if (state == READY) begin
-		cnt <= 5'b00000;
+		if (next_state == DROP)
+			cnt <= 5'd29;
+		else
+			cnt <= 5'b00000;
 	end else if (write) begin
-		cnt <= cnt + 1;
+		if (state == DROP)
+			cnt <= cnt - 1;
+		else
+			cnt <= cnt + 1;
 	end
 end
 
@@ -70,7 +76,7 @@ begin
 end
 
 
-assign end_func = cnt == MAXROW-1 && write;
+assign end_func = state == DROP ? cnt == 5'b00000 && write : (cnt == MAXROW-1 && write);
 always @(*)
 begin
 	if (end_func)
@@ -100,7 +106,7 @@ begin
 	if (~write)
 		case (state)
 			PULL: begin
-				if (cnt == 5'b11101)
+				if (cnt == 5'd29)
 					mem_out <= 30'b000000000000000000000000000000;
 				else
 					mem_out <= out1;
@@ -116,6 +122,7 @@ begin
 	else
 		mem_out <= 30'bxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
 end
+
 
 always @(*)
 begin

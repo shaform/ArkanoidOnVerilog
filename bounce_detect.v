@@ -1,4 +1,5 @@
 module bounce_detect(
+	input enable,
 	input [9:0] b_x, b_y,
 	input [5:0] b_radius,
 	input [9:0] w_x, w_y,
@@ -19,7 +20,7 @@ assign range_y = b_y < b_radius + w_y + w_radiusy && b_y + b_radius + w_radiusy 
 
 always @(*)
 begin
-	if (range_x && range_y) begin
+	if (range_x && range_y && enable) begin
 		bounced = 1'b1;
 		if (b_x < w_x && b_x + b_radius/2 + w_radiusx < w_x)
 			direction = LEFT;

@@ -19,7 +19,7 @@ wire [1:0] b_active;
 wire [BALL_NUM*10-1:0] b_x, b_y;
 wire [10:0] vcounter; // 0~479
 wire [11:0] hcounter; // 0~639
-wire [3:0] out_back, out_paddle, out_block, out_ball, out_bmem;
+wire [3:0] out_back, out_paddle, out_block, out_ball, out_bmem, bm_block;
 wire [4:0] out_row, out_col, bm_row, bm_col;
 wire [1:0] bm_stage, bm_func;
 wire bm_ready, bm_enable;
