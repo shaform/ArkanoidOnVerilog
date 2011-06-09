@@ -5,11 +5,12 @@ module block_memory(
 	input [1:0] func,
 	input [1:0] stage,
 	output [2:0] block1, block2,
-	output busy
+	output ready
 );
 
 localparam MAXROW = 30;
 localparam READY = 2'b00;
+localparam CLEAR = 2'b00;
 localparam LOAD = 2'b01;
 localparam PULL = 2'b10;
 localparam DROP = 2'b11;
@@ -23,7 +24,7 @@ wire [29:0] rom_out, out1, out2;
 reg [29:0] mem_out, w_data;
 wire rom_enable, end_func, m_write;
 
-assign busy = state != READY;
+assign ready = state == READY;
 assign block1 = (out1 >> col1*3) & 3'b111;
 assign block2 = (out2 >> col2*3) & 3'b111;
 
@@ -89,7 +90,7 @@ always @(posedge clock)
 begin
 	if (reset)
 		rom_stage <= 2'b00;
-	else if (enable && func == LOAD && ~busy)
+	else if (enable && func == LOAD && ready)
 		rom_stage <= stage;
 end
 
@@ -128,7 +129,7 @@ end
 
 always @(posedge clock)
 begin
-	if (~busy)
+	if (ready)
 		write <= 1'b0;
 	else
 		write <= ~write;
