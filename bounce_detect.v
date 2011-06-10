@@ -7,11 +7,8 @@ module bounce_detect(
 	output reg bounced,
 	output reg [1:0] direction
 );
+`include "def.v"
 
-localparam UP = 2'b00;
-localparam RIGHT = 2'b01;
-localparam DOWN = 2'b10;
-localparam LEFT = 2'b11;
 
 wire range_x, range_y;
 assign range_x = b_x < b_radius + w_x + w_radiusx && b_x + b_radius + w_radiusx >= w_x;
@@ -23,13 +20,13 @@ begin
 	if (range_x && range_y && enable) begin
 		bounced = 1'b1;
 		if (b_x < w_x && b_x + b_radius/2 + w_radiusx < w_x)
-			direction = LEFT;
+			direction = B_LEFT;
 		else if (b_x > w_x && b_x > b_radius/2 + w_x + w_radiusx)
-			direction = RIGHT;
+			direction = B_RIGHT;
 		else if (b_y < w_y)
-			direction = UP;
+			direction = B_UP;
 		else
-			direction = DOWN;
+			direction = B_DOWN;
 	end else begin
 		bounced = 1'b0;
 		direction = 2'bxx;

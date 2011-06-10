@@ -4,8 +4,16 @@ module draw_game(
 	input [3:0] in_ball, in_block, in_paddle, in_back,
 	output reg [2:0] oRGB
 );
+reg count;
 always @(posedge clock) begin
-	if (reset || ~visible) begin
+	if (reset)
+		count = 1'b0;
+	else
+		count = ~count;
+end
+
+always @(posedge clock) begin
+	if (reset || ~visible || count) begin
 		oRGB <= 3'b000;
 	end else begin
 		if (in_ball[3])

@@ -23,6 +23,7 @@ wire [3:0] out_back, out_paddle, out_block, out_ball, out_bmem, bm_block;
 wire [4:0] out_row, out_col, bm_row, bm_col;
 wire [1:0] bm_stage, bm_func;
 wire bm_ready, bm_enable;
+wire st_init, st_dead;
 
 
 
@@ -48,19 +49,21 @@ paddle_control pd_control(.clock(iCLK_50), .reset(reset), .enable(1'b1), .rotary
 	.rotary_right(rotary_right), .speed(10), .radius(16), .paddle_x(p_x), .paddle_y(p_y));
 
 
-state_control s_control(.clock(iCLK_50), .reset(reset), .start(start), .btn_l(btn_l), .btn_r(btn_r),
+state_control s_control(.clock(iCLK_50), .reset(reset), .start(start), .btn_l(btn_l), .btn_r(btn_r), .iSW(iSW),
 	.bm_ready(bm_ready), .bm_block(bm_block), 
 	.p_x(p_x), .p_y(p_y), .p_radius(p_radius),
 	.b_active(b_active), .b_radius(b_radius), .o_bx(b_x), .o_by(b_y),
-	.bm_enable(bm_enable), .bm_row(bm_row), .bm_col(bm_col), .bm_func(bm_func), .bm_stage(bm_stage));
+	.bm_enable(bm_enable), .bm_row(bm_row), .bm_col(bm_col), .bm_func(bm_func), .bm_stage(bm_stage),
+	.dead(st_dead), .init(st_init));
 
 // Game display
 
-//draw_back d_back()
-//
+draw_back d_back(.out(out_back), .vcounter(vcounter), .hcounter(hcounter),
+	.dead(st_dead), .init(st_init));
+
 block_memory b_mem(.clock(iCLK_50), .reset(reset), .enable(bm_enable),
 	.row1(bm_row), .row2(out_row), .col1(bm_col), .col2(out_col),
-	.func(bm_func), .stage(iSW[1:0]), .block1(bm_block), .block2(out_bmem), .ready(bm_ready));
+	.func(bm_func), .stage(bm_stage), .block1(bm_block), .block2(out_bmem), .ready(bm_ready));
 
 draw_block d_block(.vcounter(vcounter), .hcounter(hcounter), .block(out_bmem),
 	.sel_row(out_row), .sel_col(out_col), .out(out_block));
@@ -69,7 +72,7 @@ draw_ball d_ball(.out(out_ball), .vcounter(vcounter), .hcounter(hcounter),
 	.xs(b_x), .ys(b_y), .active(2'b11), .radius(b_radius));
 
 draw_game d_game(.clock(clk_25), .reset(reset), .visible(visible),
-	.in_ball(out_ball), .in_block(out_block), .in_paddle(out_paddle), .in_back(4'b0), .oRGB({oVGA_R, oVGA_G, oVGA_B}));
+	.in_ball(out_ball), .in_block(out_block), .in_paddle(out_paddle), .in_back(out_back), .oRGB({oVGA_R, oVGA_G, oVGA_B}));
 
 draw_paddle d_paddle(.vcounter(vcounter), .hcounter(hcounter),
 	.x(p_x), .y(p_y), .radius(p_radius), .out(out_paddle));
@@ -78,7 +81,7 @@ VGA_control vga_c(.CLK(clk_25), .reset(reset), .vcounter(vcounter), .hcounter(hc
 	.visible(visible), .oHS(oHS), .oVS(oVS));
 
 assign reset = btn_N;
-assign oLED = {5'b0, btn_r, btn_l, start};
+assign oLED = {bm_stage, 3'b0, btn_r, btn_l, start};
 //assign oLED[1:0] = result;
 //assign oLED[7:2] = hp;
 endmodule

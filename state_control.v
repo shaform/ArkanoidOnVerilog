@@ -5,33 +5,25 @@ module state_control
 )
 (
 	input clock, reset, start, btn_l, btn_r,
+	input [3:0] iSW,
 	input bm_ready,
 	input [3:0] bm_block,
 	input [9:0] p_x, p_y,
 	output [5:0] p_radius, b_radius,
 	output [BALL_NUM*10-1:0] o_bx, o_by,
-	output [BALL_NUM-1:0] b_active,
+	output reg [BALL_NUM-1:0] b_active,
 	output reg [SHOT_NUM*2-1:0] o_sx, o_sy,
 	output [SHOT_NUM-1:0] s_active,
 	output reg bm_enable,
 	output [4:0] bm_row, bm_col,
-	output reg [1:0] bm_func, bm_stage
+	output reg [1:0] bm_func,
+	output [1:0] bm_stage,
+	output dead, init
 );
 
-localparam MAXX = 320;
-localparam MAXY = 480;
-localparam LEFT = 160;
-localparam TOP = 0;
-localparam PD_H = 8;
-localparam PD_LEN = 20;
+`include "def.v"
+
 localparam UNIT = 2000000;
-localparam CNT_MAX = 20;
-
-localparam B_UP = 2'b00;
-localparam B_RIGHT = 2'b01;
-localparam B_DOWN = 2'b10;
-localparam B_LEFT = 2'b11;
-
 localparam ST_INIT = 2'b00;
 localparam ST_WAIT = 2'b01;
 localparam ST_PLAY = 2'b10;
@@ -39,6 +31,13 @@ localparam ST_DEAD = 2'b11;
 
 assign b_radius = 8;
 assign p_radius = 16;
+
+
+
+
+
+wire bm_empty;
+wire load_stage;
 
 wire [5:0] bl_radius;
 reg [1:0] state, next_state;
@@ -50,23 +49,32 @@ wire [40:0] b_cntx[BALL_NUM-1:0], b_cnty[BALL_NUM-1:0];
 wire [BALL_NUM-1:0] b_rstx, b_rsty;
 wire [BALL_NUM-1:0] b_bounced_p, b_bounced_bl, b_bounced;
 wire [1:0] b_bdi_p[BALL_NUM-1:0], b_bdi_bl[BALL_NUM-1:0], b_bdi[BALL_NUM-1:0];
+reg [1:0] stage, next_stage;
 
 wire bl_enable, bl_rstc, bl_rstr;
 assign bl_x = LEFT + 16 + bm_col*32;
 assign bl_y = TOP + 8 + bm_row*16;
+assign bm_stage = next_stage;
+assign load_stage = (state == ST_INIT || state == ST_PLAY) && next_state == ST_WAIT;
+
+always @(posedge clock)
+begin
+	if (reset)
+		b_active <= 0;
+	else if (next_state == ST_WAIT)
+		b_active[0] <= 1'b1;
+end
 
 always @(*)
 begin
 	bm_enable = 1'b0;
-	bm_stage = 2'b00;
 	bm_func = 2'bxx;
-	if (state == ST_INIT && start) begin
+	if ((state == ST_INIT && start ) || (state == ST_PLAY && next_state == ST_WAIT)) begin
 		bm_enable = 1'b1;
-		bm_func = 2'b01;
-		bm_stage = 2'b11;
+		bm_func = F_LOAD;
 	end else if (state == ST_PLAY && b_bounced_bl) begin
 		bm_enable = 1'b1;
-		bm_func = 2'b00;
+		bm_func = F_CLEAR;
 	end else if (btn_r) begin
 		bm_enable = 1'b1;
 		bm_func = 2'b11;
@@ -105,30 +113,78 @@ always @(*)
 begin
 	case (state)
 		ST_INIT: begin
-			if (start)
+			if (start && bm_ready)
 				next_state = ST_WAIT;
 			else
 				next_state = ST_INIT;
 		end
 		ST_WAIT: begin
-			if (start)
+			if (start && bm_ready)
 				next_state = ST_PLAY;
 			else
 				next_state = ST_WAIT;
 		end
-		ST_PLAY: next_state = ST_PLAY;
+		ST_PLAY: begin
+			if (0'b0 /*&& ball_num*/)
+				next_state = ST_DEAD;
+			else if (bm_empty)
+				next_state = stage == 2'b11 ? ST_INIT : ST_WAIT;
+			else
+				next_state = ST_PLAY;
+		end
 		ST_DEAD: next_state = ST_DEAD;
 		default:
 			next_state = 2'bxx;
 	endcase
 end
 
+
+/*
+always @(*)
+begin
+	case (state)
+		ST_INIT: begin
+			if (start);
+			else;
+	endcase
+end
+*/
+
+// stage control
+always @(posedge clock)
+begin
+	if (reset)
+		stage <= 2'b00;
+	else if (load_stage)
+		stage <= next_stage;
+end
+always @(*)
+begin
+	if (iSW[1:0] == 2'b11)
+		next_stage = iSW[3:2];
+	else if (state == ST_INIT)
+		next_stage = 2'b00;
+	else
+		next_stage = (stage + 1)%4;
+end
+
 // block counter
 assign bl_enable = bm_col >= 4'd9;
 assign bl_rstc = reset || bl_enable;
-assign bl_rstr = reset || bm_row >= 5'd30;
+assign bl_rstr = reset || (bm_row >= 5'd29 && bl_enable);
 counter #(5) cntblc(clock, bl_rstc, 1'b1, bm_col);
 counter #(5) cntblr(clock, bl_rstr, bl_enable, bm_row);
+
+reg scan_empty;
+always @(posedge clock)
+begin
+	if (reset || ~bm_ready || bm_enable || bm_block)
+		scan_empty <= 1'b0;
+	else if (bm_row == 0 && bm_col == 0)
+		scan_empty <= 1'b1;
+end
+
+assign bm_empty = (reset || ~bm_ready || bm_block) ? 1'b0 : bm_row == 5'd29 && scan_empty;
 
 assign bl_radius = bm_block[2] ? 16 : 8;
 
