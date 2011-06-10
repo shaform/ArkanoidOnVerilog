@@ -19,7 +19,7 @@ begin
 	    if (y == TOP) 
 			active = 1'b0;
 	    else
-			y = y+1;
+			y = y-1;
     end	
 end
 
