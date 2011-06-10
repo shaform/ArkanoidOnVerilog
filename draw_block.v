@@ -36,14 +36,17 @@ begin
 				else case (block[1:0])
 					2'b00: out = 4'b0000; //<-- block=3'b000 --> impossible to happen here
 					2'b01: out = 4'b1100; //red
-					2'b10: out = 4'b1110; //yellow
+					2'b10: out = 4'b1011; //green+blue
 					2'b11: out = 4'b1101; //pink
 				endcase
 				//-----------------------------------------------
 			end else if (i==8 || i==23)
 				out = 4'b1000; 
-			else
-				out = 4'b0000;
+			else case(block[1:0])
+				2'b11:	if(i==0 || i==31 || j==0 || j==15) out = 4'b1000;
+					else out = 4'b1110; //yellow
+				default:out = 4'b0000;
+			endcase	
 			
 		end else if (block[2]) begin : twentymulten //32*16 block here
 			integer i,j;
@@ -58,8 +61,8 @@ begin
 			else begin
 				case (block[1:0])
 					2'b00: out = 4'b1001; //blue
-					2'b01: out = 4'b1011; //green+blue=?
-					2'b10: out = 4'b1010; //green
+					2'b01: out = 4'b1010; //green
+					2'b10: out = 4'b1110; //yellow
 					2'b11: out = 4'b1111; //white?!
 				endcase
 			end
