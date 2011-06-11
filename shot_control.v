@@ -6,21 +6,28 @@ module shot_control(
 );
 `include "def.v"
 
+wire [UBIT-1:0] cnt;
+assign rst = reset || cnt >= UNIT;
+counter #(UBIT) cnt0(clock, rst, enable, cntx);
 
-always @ (posedge clock)
+
+always @(posedge clock)
 begin
-    if (reset) begin
-	    active = 1'b0;
-    end else if ({shot,active} == 2'b10) begin
-	    active = 1'b1;
-	    x = in_x;
-	    y = in_y;
-    end else if (active) begin
-	    if (y == TOP) 
-			active = 1'b0;
-	    else
-			y = y-1;
-    end	
+	if (reset || y <= TOP) begin
+		active <= 1'b0;
+	end else if (shot) begin
+		active <= 1'b1;
+	end
+end
+
+always @(posedge clock)
+begin
+	if (active) begin
+		y <= y-1;
+	end else if (shot) begin
+		x <= in_x;
+		y <= in_y;
+	end
 end
 
 endmodule
