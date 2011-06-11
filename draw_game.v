@@ -10,8 +10,9 @@ always @(posedge clock) begin
 	if (reset || ~visible) begin
 		oRGB <= 3'b000;
 	end else begin
-		if (dead | init & in_back[3])
-			oRGB <= in_back[2:0];
+		if (dead | init)
+			if (in_back[3]) oRGB <= in_back[2:0];
+			else oRGB <= 3'b000;
 		else if (in_ball[3])
 			oRGB <= in_ball[2:0];
 		else if (in_block[3])

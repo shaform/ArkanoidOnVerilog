@@ -60,8 +60,8 @@ wire paddle_size, paddle_speed, give_ball, ball_speed, ball_size, ball_display, 
 
 reg [9:0] g_inx, g_iny;
 
-wire [UBIT*2-1:0] swcnt;
-counter #(UBIT*2) cntsw(clock, reset, 1'b1, swcnt);
+wire [UBIT-1:0] swcnt;
+counter #(UBIT) cntsw(clock, reset, 1'b1, swcnt);
 
 gift_control g_control(clock, reset | (!b_active), |b_bd_bl, g_hit, bl_x, bl_y, g_kind, g_x, g_y, g_active,
 	paddle_size, paddle_speed, give_ball, ball_speed, ball_size, ball_display, get_shot, drop_block);
@@ -167,9 +167,9 @@ begin
 	end else if (drop_block) begin
 		bm_enable = 1'b1;
 		bm_func = 2'b11;
-	end else if (btn_l) begin
-		bm_enable = 1'b1;
-		bm_func = 2'b10;
+//	end else if (btn_l) begin
+//		bm_enable = 1'b1;
+//		bm_func = 2'b10;
 	end
 end
 
