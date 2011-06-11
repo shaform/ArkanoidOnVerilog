@@ -2,11 +2,11 @@ module gift_control(
 	input clock, reset, enable, hit,
 	// The gift position
 	input [9:0] in_x, in_y,
-	output [2:0] kind,
-	output [9:0] x, y,
-	output active,
+	output reg [2:0] kind,
+	output reg [9:0] x, y,
+	output reg active,
 	// control signal
-	output paddle_size, paddle_speed, give_ball, ball_size, ball_display, get_shot, drop_block
+	output reg paddle_size, paddle_speed, give_ball, ball_speed, ball_size, ball_display, get_shot, drop_block
 
 );
 `include "def.v"
@@ -20,12 +20,11 @@ localparam SOT = 3'b110; // get shot capacity
 localparam DRP = 3'b111; // drop the blocks
 
 wire [31:0] num;
-
 wire [UBIT-1:0] cnt;
-assign rst = reset || cnt >= UNIT;
-counter #(UBIT) cnt0(clock, rst, enable, cntx);
+assign rst = reset || cnt >= UNIT/10;
+counter #(UBIT) cnt0(clock, rst, active, cnt);
 
-rand r_gen(clock, reset, num)
+rand r_gen(clock, reset, num);
 
 
 // set active value
@@ -42,34 +41,34 @@ end
 always @(posedge clock)
 begin
 	if (active) begin
-		y <= y+1;
+		if (rst) y <= y+1;
 	end else if (enable) begin
 		x <= in_x;
 		y <= in_y;
-		kind <= rand_num[13:11];
+		kind <= num[2:0];
 	end
 end
 
-always @(*)
+always @(posedge clock)
 begin
 	if (active && hit) begin
-		if (kind == CHP) paddle_size = 1'b1;
-		if (kind == SPP) paddle_speed = 1'b1;
-		if (kind == GBL) give_ball = 1'b1;
-		if (kind == SPB) ball_speed = 1'b1;
-		if (kind == CHB) ball_size = 1'b1;
-		if (kind == HID) ball_display = 1'b1;
-		if (kind == SOT) get_shot = 1'b1;
-		if (kind == DRP) drop_block = 1'b1;
-	end else beign
-		paddle_size = 1'b0;
-		paddle_speed = 1'b0;
-		give_ball = 1'b0;
-		ball_speed = 1'b0;
-		ball_size = 1'b0;
-		ball_display = 1'b0;
-		get_shot = 1'b0;
-		drop_block = 1'b0;
+		if (kind == CHP) paddle_size <= 1'b1;
+		if (kind == SPP) paddle_speed <= 1'b1;
+		if (kind == GBL) give_ball <= 1'b1;
+		if (kind == SPB) ball_speed <= 1'b1;
+		if (kind == CHB) ball_size <= 1'b1;
+		if (kind == HID) ball_display <= 1'b1;
+		if (kind == SOT) get_shot <= 1'b1;
+		if (kind == DRP) drop_block <= 1'b1;
+	end else begin
+		paddle_size <= 1'b0;
+		paddle_speed <= 1'b0;
+		give_ball <= 1'b0;
+		ball_speed <= 1'b0;
+		ball_size <= 1'b0;
+		ball_display <= 1'b0;
+		get_shot <= 1'b0;
+		drop_block <= 1'b0;
 	end
 end
 

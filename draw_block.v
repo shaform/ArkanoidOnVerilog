@@ -1,4 +1,5 @@
 module draw_block(
+	input clock,
 	input [10:0] vcounter,
 	input [11:0] hcounter,
 	input [2:0] block,
@@ -16,6 +17,10 @@ assign range = hcounter >= LEFT && hcounter < LEFT+MAXX && vcounter >= TOP && vc
 
 assign sel_col = (hcounter-LEFT)/32;
 assign sel_row = (vcounter-TOP)/16;
+
+reg rev;
+always @(posedge clock)
+	rev <= ~rev;
 
 
 always @(*)
@@ -63,7 +68,7 @@ begin
 					2'b00: out = 4'b1001; //blue
 					2'b01: out = 4'b1010; //green
 					2'b10: out = 4'b1110; //yellow
-					2'b11: out = 4'b1111; //white?!
+					2'b11: out = 4'b1111 /*: 4'b1000*/; //white?!
 				endcase
 			end
 			//------------------------------------------------------

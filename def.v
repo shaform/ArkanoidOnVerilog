@@ -16,3 +16,7 @@ localparam F_CLEAR = 2'b00;
 localparam F_LOAD = 2'b01;
 localparam F_PULL = 2'b10;
 localparam F_DROP = 2'b11;
+
+
+localparam UNIT = 2000000;
+localparam UBIT = 21;
