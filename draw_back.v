@@ -32,12 +32,20 @@ end
 always @(*)
 begin
 	if (vcounter >= TOP && vcounter < MAXY-160 && hcounter >= LEFT && hcounter < LEFT+MAXX )
-		if (draw && dead)
+		if (draw && dead && vcounter >= TOP && vcounter < 112)
 			out = 4'b1011;
-		else if (draw && init)
+		else if (draw && dead && vcounter >= 112 && vcounter <= 223)
+			out = 4'b1100;
+		else if (draw && dead && vcounter > 223 && vcounter < MAXY-160)
+			out = 4'b1010;
+		else if (draw && init && hcounter >= LEFT+80 && hcounter < LEFT-80+MAXX && vcounter >= 112 && vcounter <= 112+32)
+			out = 4'b1100;
+		else if (draw && init && vcounter >= TOP && vcounter <= 180)
 			out = 4'b1110;
+		else if (draw && init && vcounter > 180 && vcounter < MAXY-160)
+			out = 4'b1100;
 		//else if (draw && win)
-	//		out = 4'b1101;
+		//	out = 4'b1101;
 		else
 			out = 4'b0000;
 			
