@@ -1,7 +1,7 @@
 module draw_back (
 	input [10:0] vcounter,
 	input [11:0] hcounter,
-	input dead, init,
+	input dead, init, win,
 	output reg [3:0] out
 );
 `include "def.v"
@@ -23,8 +23,8 @@ begin
 		kind = 2'b01;
 	else if (init)
 		kind = 2'b00;
-	//else if (win)
-	//	kind = 2'b11;
+	else if (win)
+		kind = 2'b11;
 	else
 		kind = 2'bxx;
 end		
@@ -44,8 +44,12 @@ begin
 			out = 4'b1110;
 		else if (draw && init && vcounter > 180 && vcounter < MAXY-160)
 			out = 4'b1100;
-		//else if (draw && win)
-		//	out = 4'b1101;
+		else if (draw && win && hcounter >= LEFT && hcounter < LEFT+240 && vcounter >= TOP && vcounter <= 160 )
+			out = 4'b1101;
+		else if (draw && win && hcounter >= LEFT+240 && hcounter < LEFT+320 && vcounter > = TOP && vcounter < 176)
+			out = 4'b1110;
+		else if (draw && win && vcounter >= 176 && vcounter <320)
+			out = 4'b1011;
 		else
 			out = 4'b0000;
 			
