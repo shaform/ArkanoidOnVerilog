@@ -5,6 +5,7 @@ module draw_ball
 (
 	input [10:0] vcounter,
 	input [11:0] hcounter,
+	input visible,
 	input [BALL_NUM*10-1:0] xs, ys,
 	input [1:0] active,
 	input [5:0] radius,
@@ -16,7 +17,7 @@ begin : circle
 	integer i;
 	out = 4'b0000;
 	for (i=0; i<2; i=i+1) begin : forblock
-		if (active[i]) begin : ballblock
+		if (active[i] && visible) begin : ballblock
 			integer dx, dy;
 			dx = hcounter;
 			dy = vcounter;

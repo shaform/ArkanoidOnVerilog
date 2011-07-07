@@ -60,8 +60,8 @@ wire paddle_size, paddle_speed, give_ball, ball_speed, ball_size, ball_display, 
 
 reg [9:0] g_inx, g_iny;
 
-wire [UBIT-1:0] swcnt;
-counter #(UBIT) cntsw(clock, reset, 1'b1, swcnt);
+wire [UBIT-1+8:0] swcnt;
+counter #(UBIT+8) cntsw(clock, reset, b_sw, swcnt);
 
 gift_control g_control(clock, reset | (!b_active), |b_bd_bl, g_hit, bl_x, bl_y, g_kind, g_x, g_y, g_active,
 	paddle_size, paddle_speed, give_ball, ball_speed, ball_size, ball_display, get_shot, drop_block);
@@ -101,7 +101,7 @@ begin
 
 end
 assign init = state == ST_INIT;
-assign dead = state == ST_DEAD;
+assign dead = (state == ST_DEAD) && ~win;
 
 always @(posedge clock)
 begin
@@ -130,8 +130,6 @@ end
 always @(posedge clock)
 begin
 	if (reset)
-		win <= 1'b0;
-	else if (next_state == ST_DEAD)
 		win <= 1'b0;
 	else if (stage == 2'b11 && bm_empty)
 		win <= 1'b1;
@@ -167,9 +165,12 @@ begin
 	end else if (drop_block) begin
 		bm_enable = 1'b1;
 		bm_func = 2'b11;
-//	end else if (btn_l) begin
-//		bm_enable = 1'b1;
-//		bm_func = 2'b10;
+	end else if (btn_l) begin
+		bm_enable = 1'b1;
+		bm_func = 2'b10;
+	end else if (btn_r) begin
+		bm_enable = 1'b1;
+		bm_func = 2'b11;
 	end
 end
 
@@ -183,7 +184,7 @@ for (i=0; i<BALL_NUM; i=i+1) begin : b_genblock
 	ball_control ball(clock, reset, next_state == ST_WAIT || ~b_active[i], b_active[i], floor, b_radius, p_x, p_y-PD_H-b_radius, b_sx[i], b_sy[i], i,b_bd_p[i], b_bd_bl[i], b_bd_di[i], b_x[i], b_y[i], b_dead[i]);
 	bounce_detect p_bounce(1'b1, b_x[i], b_y[i], b_radius, p_x, p_y, p_radius, PD_H, b_bd_p[i], b_bd_di_p[i]);
 	bounce_detect bl_bounce(bm_block != 0 && bm_ready && b_active[i], b_x[i], b_y[i], b_radius, bl_x, bl_y, bl_radius, 8, b_bd_bl[i], b_bd_di_bl[i]);
-	ball_speed b_speed(b_x[i], b_y[i], p_x, p_radius, b_bd_p[i], b_sx[i], b_sy[i]);
+	ball_speed b_speed(clock, b_x[i], b_y[i], p_x, p_radius, b_bd_p[i], b_sx[i], b_sy[i]);
 
 	assign o_bx[i*10+9:i*10] = b_x[i];
 	assign o_by[i*10+9:i*10] = b_y[i];
@@ -215,7 +216,7 @@ begin
 				next_state = ST_WAIT;
 		end
 		ST_PLAY: begin
-			if (!(b_active || hp))
+			if (!(b_active || hp) || (stage == 2'b11 && bm_empty))
 				next_state = ST_DEAD;
 			else if (!b_active)
 				next_state = ST_WAIT;

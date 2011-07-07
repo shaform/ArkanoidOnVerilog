@@ -52,7 +52,6 @@ begin : bounce_check
 	integer i;
 	for (i=0; i<BALL_NUM; i=i+1) begin
 		if (b_active[i]) begin
-			i_bi[i*10+:10]
 		end
 	end
 end

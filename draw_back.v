@@ -44,9 +44,9 @@ begin
 			out = 4'b1110;
 		else if (draw && init && vcounter > 180 && vcounter < MAXY-160)
 			out = 4'b1100;
-		else if (draw && win && hcounter >= LEFT && hcounter < LEFT+240 && vcounter >= TOP && vcounter <= 160 )
+		else if (draw && win && hcounter >= LEFT && hcounter < LEFT+224 && vcounter >= TOP && vcounter <= 160 )
 			out = 4'b1101;
-		else if (draw && win && hcounter >= LEFT+240 && hcounter < LEFT+320 && vcounter > = TOP && vcounter < 176)
+		else if (draw && win && hcounter >= LEFT+224 && hcounter < LEFT+320 && vcounter >= TOP && vcounter < 176)
 			out = 4'b1110;
 		else if (draw && win && vcounter >= 176 && vcounter <320)
 			out = 4'b1011;

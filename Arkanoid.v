@@ -67,17 +67,17 @@ block_memory b_mem(.clock(iCLK_50), .reset(reset), .enable(bm_enable),
 // Game display
 
 draw_game d_game(.clock(clk_25), .reset(reset), .visible(visible),
-	.dead(st_dead), .init(st_init),
+	.dead(st_dead), .init(st_init), .win(st_win),
 	.in_ball(out_ball), .in_gift(out_gift), .in_block(out_block), .in_paddle(out_paddle), .in_back(out_back), .oRGB({oVGA_R, oVGA_G, oVGA_B}));
 
 draw_back d_back(.out(out_back), .vcounter(vcounter), .hcounter(hcounter),
-	.dead(st_dead), .init(st_init)/*, .win(st_win)*/);
+	.dead(st_dead), .init(st_init), .win(st_win));
 
 draw_block d_block(.clock(clk_25), .vcounter(vcounter), .hcounter(hcounter), .block(out_bmem),
 	.sel_row(out_row), .sel_col(out_col), .out(out_block));
 	
-draw_ball d_ball(.out(out_ball), .vcounter(vcounter), .hcounter(hcounter),
-	.xs(b_x), .ys(b_y), .active(b_active & b_dis), .radius(b_radius));
+draw_ball d_ball(.out(out_ball), .vcounter(vcounter), .hcounter(hcounter), .visible(b_dis),
+	.xs(b_x), .ys(b_y), .active(b_active), .radius(b_radius));
 
 draw_ball d_shot(.out(out_shot), .vcounter(vcounter), .hcounter(hcounter),
 	.xs(s_x), .ys(s_y), .active(s_active), .radius(4));
