@@ -7,6 +7,8 @@ Developed on a Xilinx Spartan-3E Starter Kit FPGA Board, XC3S500E FG320.
 The final version has been modified after demo, and, unfortunately, it has not been tested.
 Feel free to play with it.
 
+![Game Play](https://raw.github.com/shaform/ArkanoidOnVerilog/master/game-play.gif)
+
 License
 -------
 
